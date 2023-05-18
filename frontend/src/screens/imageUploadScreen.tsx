@@ -34,12 +34,20 @@ const ImageUploadScreen: React.FC = () => {
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { userInfo } = state;
 
+  const [name, setName] = useState('');
+  const [desc, setDesc] = useState('');
   const [image, setImage] = useState<File | null>(null);
-  const [imageName, setImageName] = useState('');
 
   const [{ loadingUpload }, dispatch] = useReducer(reducer, {
     loadingUpload: false,
   });
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  };
+
+  const handleDescChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDesc(e.target.value);
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -47,39 +55,36 @@ const ImageUploadScreen: React.FC = () => {
     }
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setImageName(e.target.value);
-  };
-
-  const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!image) {
+      alert('Please select an image.');
+      return;
+    }
+
     try {
       const formData = new FormData();
-      formData.append('image', image as File);
-      formData.append('imageName', imageName);
-      dispatch({ type: 'UPLOAD_REQUEST' });
-      console.log(loadingUpload);
-      const { data } = await Axios.post(
-        'http://localhost:5000/user/image',
+      formData.append('name', name);
+      formData.append('desc', desc);
+      formData.append('image', image);
+
+      const response = await Axios.post(
+        'http://localhost:5000/image/upload',
         formData,
         {
-          headers: { authorization: `${userInfo!.token}` },
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            authorization: `${userInfo!.token}`,
+          },
         }
       );
-      console.log(data);
-      dispatch({
-        type: 'UPLOAD_SUCCESS',
-      });
-      ctxDispatch({ type: 'USER_SIGNIN', payload: data });
-      localStorage.setItem('userInfo', JSON.stringify(data));
-      toast.success('Image Uploaded successfully');
-      console.log(data)
-    //   navigate(`/user/image/${userInfo!.email}`);
-    } catch (err: any) {
-      dispatch({
-        type: 'UPLOAD_FAIL',
-      });
-      toast.error(getError(err));
+
+      console.log(response.data);
+      alert('Image uploaded successfully!');
+    } catch (error) {
+      console.error(error);
+      alert(error);
     }
   };
 
@@ -92,42 +97,50 @@ const ImageUploadScreen: React.FC = () => {
     <div className="min-h-screen bg-gray-600 flex flex-col justify-center items-center sm:px-16 px-6 sm:py-16 py-10">
       <div className="border w-full h-full">
         <h1 className="text-3xl text-center py-3">Image Upload Screen</h1>
-        <form
-          onSubmit={submitHandler}
-          className="gap-6 flex flex-col flex-wrap justify-center items-center border"
-        >
-          <div className="flex flex-row items-center gap-4 max-sm:flex-col justify-center my-4 ">
-            <label htmlFor="imageName" className="block font-medium mb-1">
-              Image Name
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block mb-1">
+              Name:
             </label>
             <input
               type="text"
-              id="imageName"
-              value={imageName}
+              id="name"
+              value={name}
               onChange={handleNameChange}
-              className="border border-gray-300 p-2 rounded"
-              required
+              className="border border-gray-300 px-2 py-1 rounded w-full"
             />
           </div>
-          <div className="flex flex-row items-center gap-4 max-sm:flex-col justify-center my-4">
-            <label htmlFor="image" className="block font-medium mb-1">
-              Image
+          <div>
+            <label htmlFor="desc" className="block mb-1">
+              Description:
+            </label>
+            <input
+              type="text"
+              id="desc"
+              value={desc}
+              onChange={handleDescChange}
+              className="border border-gray-300 px-2 py-1 rounded w-full"
+            />
+          </div>
+          <div>
+            <label htmlFor="image" className="block mb-1">
+              Image:
             </label>
             <input
               type="file"
               id="image"
               onChange={handleImageChange}
-              accept="image/*"
-              className="border border-gray-300 p-2 rounded"
-              required
+              className="border border-gray-300 px-2 py-1 rounded"
             />
           </div>
-          <button
-            type="submit"
-            className="flex flex-row items-center gap-4 max-sm:flex-col justify-center my-4 border p-4 text-2xl rounded-lg shadow-md shadow-black"
-          >
-            Submit
-          </button>
+          <div>
+            <button
+              type="submit"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Upload
+            </button>
+          </div>
         </form>
       </div>
     </div>

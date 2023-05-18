@@ -6,6 +6,7 @@ import homeRouter from './routes/home';
 import userRouter from './routes/user';
 import authRouter from './routes/auth';
 import profileRouter from './routes/profile';
+import imageRouter from './routes/images';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use('/', homeRouter);
 app.use('/api/users', userRouter);
 app.use('/auth', authRouter);
 app.use('/user', profileRouter);
+app.use('/image', imageRouter);
 
 app.use((err: Error, req: Request, res: Response, next: Function) => {
   res.status(500).send({ message: err.message });
